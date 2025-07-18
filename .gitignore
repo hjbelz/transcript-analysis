@@ -1,0 +1,11 @@
+transcripts/
+results/
+bin/
+.DS_Store
+
+# Environments
+.venv
+
+# temporary ignore files
+classifier-prompt.txt
+prompt_classifier.py
