@@ -35,5 +35,4 @@ def filter_no_user_utterance(transcript: dict, df_transcript_row: pd.Series) -> 
         bool: True if the transcript has user utterances, False otherwise.
     """
     maxUserWordCount = df_transcript_row.get("maxUserWordCount", 0)
-    print (f"Checking if maxUserWordCount > 0: {maxUserWordCount}")
     return maxUserWordCount > 0

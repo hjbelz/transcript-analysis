@@ -29,7 +29,7 @@ def transcript_to_pseudo_xml(transcript):
     for utterance in utterances:
         role = utterance["role"]
         content = utterance["content"] # utterance["content"].replace("<", "&lt;").replace(">", "&gt;")
-        xml_content += f"  <utterance role='{role}'>{content}</utterance>\n"
+        xml_content += f"  <{role}>{content}</{role}>\n"
     xml_content += "</conversation>"
     return xml_content
 
