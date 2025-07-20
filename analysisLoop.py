@@ -1,6 +1,7 @@
 import pandas as pd
 import json
 import os
+import analyzer.conversation.basic
 
 
 def readTranscriptFile(filePath):
@@ -46,52 +47,8 @@ def initGlobalResultDataFrameFromTranscripts(transcripts):
         sessionIds.append(transcript["conversation"]["sessionId"])
 
     df["sessionId"] = sessionIds
-
-
     return df
 
-def globAnalysis_countTurnsInTranscripts(transcripts, globalResultDF, isAggregation=False):
-    """ Count the number of turns in the given transcripts and add a row for each to the global result. """
-
-    turnCounts = []
-    for transcript in transcripts:
-        count = 0
-        lastTurnRole = None
-        iterator = iter(transcript["conversation"]["utterances"])
-        nextUtterance = next(iterator, None)
-        while (nextUtterance is not None):
-            # When aggregating: Only if the role is different from the last one, we count it as a new turn
-            if not isAggregation or nextUtterance["role"] != lastTurnRole:
-                count += 1
-                lastTurnRole = nextUtterance["role"]
-            # Move to the next utterance
-            nextUtterance = next(iterator, None)
-        # Add transcript-level turn count to the list
-        turnCounts.append(count)
-
-    globalResultDF["turnCount"] = turnCounts
-
-def globAnalysis_addLocalPath(transcripts, globalResultDF):
-    """ Add the local path of the transcript files to the global result DataFrame (only works for CSV export). """
-    localPaths = []
-    for transcript in transcripts:
-        localPaths.append("file://" + os.getcwd() + "/build/" + transcript["conversation"]["sessionId"] + ".json")
-
-    globalResultDF["localPath"] = localPaths
-
-def globAnalysis_maxWordCountUserUtterances(transcripts, globalResultDF):
-    """ Calculate the maximum word count of user utterances in the transcripts. """
-    maxWordCounts = []
-    for transcript in transcripts:
-        maxCount = 0
-        for utterance in transcript["conversation"]["utterances"]:
-            if utterance["role"] == "user":
-                wordCount = len(utterance["content"].split())
-                if wordCount > maxCount:
-                    maxCount = wordCount
-        maxWordCounts.append(maxCount)
-
-    globalResultDF["maxUserWordCount"] = maxWordCounts
 
 def globAnalysis_LLMPrompt(transcripts, globalResultDF, promptFilePath, resultColumnName="llmPromptAnalysis"):
     """ Analyze the transcripts using a prompt and adding the result to the global result DataFrame. """
@@ -106,16 +63,24 @@ def globAnalysis_LLMPrompt(transcripts, globalResultDF, promptFilePath, resultCo
 
     globalResultDF["llmPromptAnalysis"] = analysisResults
 
-# read transcript files from the given path
-transcripts = readTranscriptFilesInPath("./transcripts")
 
-# initialize global result DataFrame
-globalResultDF = initGlobalResultDataFrameFromTranscripts(transcripts)
-globAnalysis_countTurnsInTranscripts(transcripts, globalResultDF, True)
-# globAnalysis_addLocalPath(transcripts, globalResultDF)
-globAnalysis_maxWordCountUserUtterances(transcripts, globalResultDF)
+if(__name__ == "__main__"):
+    # 
+    # Test Script for the analysis loop
+    #
 
-# globalResultDF.to_csv("./build/globalResult.csv", index=False)
-globalResultDF.to_excel("./transcripts/globalResult.xlsx", index=False)
+    # read transcript files from the given path
+    transcripts = readTranscriptFilesInPath("./transcripts")
 
-print(globalResultDF)
+    # initialize global result DataFrame
+    globalResultDF = initGlobalResultDataFrameFromTranscripts(transcripts)
+    
+    # perform global analysis
+    analyzer.conversation.basic.countTurnsInTranscripts(transcripts, globalResultDF, True)
+    analyzer.conversation.basic.maxWordCountUserUtterances(transcripts, globalResultDF)
+    # analyzer.conversation.basic.addLocalPath(transcripts, globalResultDF)
+
+    # globalResultDF.to_csv("./build/globalResult.csv", index=False)
+    globalResultDF.to_excel("./transcripts/globalResult.xlsx", index=False)
+
+    print(globalResultDF)

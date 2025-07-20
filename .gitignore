@@ -6,6 +6,13 @@ bin/
 # Environments
 .venv
 
+#Ptython
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+
 # temporary ignore files
 classifier-prompt.txt
 prompt_classifier.py
