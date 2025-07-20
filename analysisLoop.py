@@ -1,7 +1,11 @@
 import pandas as pd
 import json
 import os
+
 import analyzer.conversation.basic
+import analyzer.conversation.basic_llm
+import filter
+import llm_client
 
 
 def readTranscriptFile(filePath):
@@ -50,20 +54,6 @@ def initGlobalResultDataFrameFromTranscripts(transcripts):
     return df
 
 
-def globAnalysis_LLMPrompt(transcripts, globalResultDF, promptFilePath, resultColumnName="llmPromptAnalysis"):
-    """ Analyze the transcripts using a prompt and adding the result to the global result DataFrame. """
-
-    
-    # Analyze each transcript with the prompt
-    analysisResults = []
-    for transcript in transcripts:
-        # Here you would implement the actual analysis logic using the prompt
-        # For demonstration, we'll just return the prompt length
-        analysisResults.append(len(prompt))
-
-    globalResultDF["llmPromptAnalysis"] = analysisResults
-
-
 if(__name__ == "__main__"):
     # 
     # Test Script for the analysis loop
@@ -80,7 +70,12 @@ if(__name__ == "__main__"):
     analyzer.conversation.basic.maxWordCountUserUtterances(transcripts, globalResultDF)
     # analyzer.conversation.basic.addLocalPath(transcripts, globalResultDF)
 
+    # apply LLM prompt analysis
+    llm_api_client = llm_client.get_llm_client()
+    analyzer.conversation.basic_llm.apply_llm_prompt(llm_api_client, transcripts, globalResultDF, "classifier-prompt.txt", "llmPromptAnalysis", filters=[filter.filter_no_user_utterance])
+
     # globalResultDF.to_csv("./build/globalResult.csv", index=False)
-    globalResultDF.to_excel("./transcripts/globalResult.xlsx", index=False)
+    globalResultDF.to_excel("./results/globalResult.xlsx", index=False)
 
     print(globalResultDF)
+ 

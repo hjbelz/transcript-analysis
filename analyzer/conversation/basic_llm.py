@@ -1,0 +1,70 @@
+import os
+import json
+import pandas as pd
+
+import filter
+import llm_client
+
+# global variable to cache the prompt definitions
+prompt_cache = {}
+
+def load_prompt(file_path):
+    """ Load a prompt from file or cache and return its content. """
+    global prompt_cache
+    if file_path in prompt_cache:
+        return prompt_cache[file_path]
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"The prompt file {file_path} does not exist.")
+
+    prompt = ""
+    with open(file_path, 'r', encoding='utf-8') as file:
+        prompt = file.read()
+        prompt_cache[file_path] = prompt
+    return prompt
+
+def transcript_to_pseudo_xml(transcript):
+    """ Convert a transcript to a pseudo XML format for LLM processing. """
+    utterances = transcript["conversation"]["utterances"]
+    xml_content = "<conversation>\n"
+    for utterance in utterances:
+        role = utterance["role"]
+        content = utterance["content"] # utterance["content"].replace("<", "&lt;").replace(">", "&gt;")
+        xml_content += f"  <utterance role='{role}'>{content}</utterance>\n"
+    xml_content += "</conversation>"
+    return xml_content
+
+def apply_prompt_to_text(llm_api_client, prompt_file_path, transcript_text):
+    """ Apply the prompt to the given prompt file and return the response. """
+    classifier_prompt = load_prompt(prompt_file_path)
+
+    # Call the LLM service API with the loaded prompt and transcript text
+    response = llm_api_client.chat.completions.create(
+        model="gpt-4.1-mini", # Deployment name!
+        messages=[
+            {"role": "system", "content": classifier_prompt + transcript_text}
+        ]
+    )
+    return response.choices[0].message.content.strip()
+
+def apply_llm_prompt(llm_api_client, transcripts, globalResultDF, promptFilePath, resultColumnName="llmPromptAnalysis", filters=[]):
+    """ Analyze the transcripts using a prompt and adding the result to the global result DataFrame. """
+
+    # Analyze each transcript with the prompt
+    analysis_results = []
+    for transcript in transcripts:
+        if not filter.is_relevant_transcript(globalResultDF, transcript, filters):
+            analysis_results.append("No analysis")
+            continue
+        # Apply the prompt to the transcript
+        transcript_as_pseudo_xml = transcript_to_pseudo_xml(transcript)
+        print(transcript_as_pseudo_xml)  # Debugging output
+        llm_result = apply_prompt_to_text(llm_api_client, promptFilePath, transcript_as_pseudo_xml)
+        analysis_results.append(llm_result)
+        # break  # Remove this break to analyze all transcripts
+
+    # Ensure the list has the same length as the DataFrame
+    #while len(analysis_results) < len(globalResultDF):
+    #    analysis_results.append("No analysis")
+
+    globalResultDF["llmPromptAnalysis"] = analysis_results
+
