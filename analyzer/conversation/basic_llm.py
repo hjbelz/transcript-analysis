@@ -46,7 +46,7 @@ def apply_prompt_to_text(llm_api_client, prompt_file_path, transcript_text):
     )
     return response.choices[0].message.content.strip()
 
-def apply_llm_prompt(llm_api_client, transcripts, globalResultDF, promptFilePath, resultColumnName="llmPromptAnalysis", filters=[]):
+def apply_llm_prompt_for_text_result(llm_api_client, transcripts, globalResultDF, promptFilePath, resultColumn="llmPromptAnalysis", filters=[]):
     """ Analyze the transcripts using a prompt and adding the result to the global result DataFrame. """
 
     # Analyze each transcript with the prompt
@@ -64,3 +64,37 @@ def apply_llm_prompt(llm_api_client, transcripts, globalResultDF, promptFilePath
 
     globalResultDF["llmPromptAnalysis"] = analysis_results
 
+
+def apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, promptFilePath, resultColumns={}, filters=[]):
+    """ Analyze the transcripts using a prompt and add the resulting JSON structure to the global result DataFrame. """
+    # create result columns
+    analysis_results = {}
+    for key in resultColumns.keys():
+        analysis_results[resultColumns[key]] = []
+
+    # Analyze each transcript with the prompt
+    for transcript in transcripts:
+        if not filter.is_relevant_transcript(globalResultDF, transcript, filters):
+            for key in resultColumns.keys():
+                analysis_results[key].append("No analysis")
+            continue
+        # Apply the prompt to the transcript
+        transcript_as_pseudo_xml = transcript_to_pseudo_xml(transcript)
+        print(transcript_as_pseudo_xml)  # Debugging output
+        llm_result = apply_prompt_to_text(llm_api_client, promptFilePath, transcript_as_pseudo_xml)
+        # Parse the JSON result
+        try:
+            llm_result_json = json.loads(llm_result)
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON from LLM result: {e}")
+            llm_result_json = {}
+        for result_key in resultColumns.keys():
+            if result_key in llm_result_json:
+                analysis_results[resultColumns[result_key]].append(llm_result_json[result_key])
+            else:
+                analysis_results[resultColumns[result_key]].append("No result")
+        # break  # Remove this break to analyze all transcripts
+    
+    # Add the results to the global DataFrame
+    for key in resultColumns.keys():
+        globalResultDF[resultColumns[key]] = analysis_results[resultColumns[key]]
