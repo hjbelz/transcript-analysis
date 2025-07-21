@@ -62,9 +62,5 @@ def apply_llm_prompt(llm_api_client, transcripts, globalResultDF, promptFilePath
         analysis_results.append(llm_result)
         # break  # Remove this break to analyze all transcripts
 
-    # Ensure the list has the same length as the DataFrame
-    #while len(analysis_results) < len(globalResultDF):
-    #    analysis_results.append("No analysis")
-
     globalResultDF["llmPromptAnalysis"] = analysis_results
 
