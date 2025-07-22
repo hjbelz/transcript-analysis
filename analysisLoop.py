@@ -74,7 +74,8 @@ if(__name__ == "__main__"):
 
     # apply LLM prompt analysis
     llm_api_client = llm_client.get_llm_client()
-    analyzer.conversation.basic_llm.apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "classifier-prompt.txt", resultColumns={"topic": "topic", "intent": "intent", "breakdown": "breakdown"}, filters=[filter.filter_no_user_utterance])
+    # analyzer.conversation.basic_llm.apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "classifier-prompt.txt", resultColumns={"topic": "topic", "intent": "intent", "breakdown": "breakdown"}, filters=[filter.filter_no_user_utterance])
+    analyzer.conversation.basic_llm.categorize_transcripts(llm_api_client, transcripts, globalResultDF)
 
     # finally, add the transcript content to the global result DataFrame
     analyzer.conversation.basic.addTranscriptsToResult(transcripts, globalResultDF)

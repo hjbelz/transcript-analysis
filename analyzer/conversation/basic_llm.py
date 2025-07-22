@@ -87,3 +87,8 @@ def apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF
     # Add the results to the global DataFrame
     for key in resultColumns.keys():
         globalResultDF[resultColumns[key]] = analysis_results[resultColumns[key]]
+
+
+def categorize_transcripts(llm_api_client, transcripts, globalResultDF):
+    """ Categorize transcripts using LLM and add the results to the global DataFrame. """
+    apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "./analyzer/conversation/llm_prompts/prmt_topic_and_intent.txt", resultColumns={"topic": "topic", "intent": "intent", "breakdown": "breakdown"}, filters=[filter.filter_no_user_utterance])
