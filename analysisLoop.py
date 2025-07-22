@@ -21,6 +21,7 @@ def readTranscriptFile(filePath):
 
     return data
 
+
 def readTranscriptFilesInPath(path):
     """ Read transcript files in the given path into a array of JSON objects. """
 
@@ -38,6 +39,7 @@ def readTranscriptFilesInPath(path):
 
     print(f"Read {len(transcripts)} transcript files from {path}.")
     return transcripts
+
 
 def initGlobalResultDataFrameFromTranscripts(transcripts):
     """ Initialize a global DataFrame with the meta data from the given transcripts. """
@@ -72,11 +74,13 @@ if(__name__ == "__main__"):
 
     # apply LLM prompt analysis
     llm_api_client = llm_client.get_llm_client()
-    # analyzer.conversation.basic_llm.apply_llm_prompt_for_text_result(llm_api_client, transcripts, globalResultDF, "classifier-prompt.txt", "llmPromptAnalysis", filters=[filter.filter_no_user_utterance])
-
     analyzer.conversation.basic_llm.apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "classifier-prompt.txt", resultColumns={"topic": "topic", "intent": "intent", "breakdown": "breakdown"}, filters=[filter.filter_no_user_utterance])
 
-    # globalResultDF.to_csv("./build/globalResult.csv", index=False)
+    # finally, add the transcript content to the global result DataFrame
+    analyzer.conversation.basic.addTranscriptsToResult(transcripts, globalResultDF)
+
+    # Save the global result DataFrame to a file
+    # globalResultDF.to_csv("./results/globalResult.csv", index=False)
     globalResultDF.to_excel("./results/globalResult.xlsx", index=False)
 
     print(globalResultDF)

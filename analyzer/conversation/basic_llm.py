@@ -2,8 +2,8 @@ import os
 import json
 import pandas as pd
 
+from analyzer.conversation.basic import transcript_to_pseudo_xml
 import filter
-import llm_client
 
 # global variable to cache the prompt definitions
 prompt_cache = {}
@@ -21,17 +21,6 @@ def load_prompt(file_path):
         prompt = file.read()
         prompt_cache[file_path] = prompt
     return prompt
-
-def transcript_to_pseudo_xml(transcript):
-    """ Convert a transcript to a pseudo XML format for LLM processing. """
-    utterances = transcript["conversation"]["utterances"]
-    xml_content = "<conversation>\n"
-    for utterance in utterances:
-        role = utterance["role"]
-        content = utterance["content"] # utterance["content"].replace("<", "&lt;").replace(">", "&gt;")
-        xml_content += f"  <{role}>{content}</{role}>\n"
-    xml_content += "</conversation>"
-    return xml_content
 
 def apply_prompt_to_text(llm_api_client, prompt_file_path, transcript_text):
     """ Apply the prompt to the given prompt file and return the response. """
