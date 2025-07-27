@@ -6,7 +6,7 @@ Your are an expert for the analysis of automated customer service conversations.
 Describe the topic of the conversation with one word.
 
 2. User intent 
-What is the overall intent of the user for conversing with the bot? Describe the intent with two words: subject and action of the user's intent (e.g. in English "reset password" or in German "Paket verfolgen")
+What is the overall intent of the user for conversing with the bot? Describe the intent with two to five words, include the subject and action of the user's intent (e.g. in English "reset password" or in German "Paket verfolgen")
 
 3. Breakdown or repair in the interaction
 If the conversation includes a breakdown in the interaction, quote the utterance leading to the breakdown. Breakdowns are frequently marked by turns which are not type-fitting responses or by turns which start a repair action. Some examples are:
@@ -29,5 +29,4 @@ The JSON keys must not be modified. The JSON values must always be expressed in 
 ## Conversation to be analyzed
 
 Below is the chat you must analyze. Think very carefully about your response. The success of our customer service depends on it!
-
 

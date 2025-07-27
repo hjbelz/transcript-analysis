@@ -75,7 +75,8 @@ if(__name__ == "__main__"):
     # apply LLM prompt analysis
     llm_api_client = llm_client.get_llm_client()
     analyzer.conversation.basic_llm.categorize_transcripts(llm_api_client, transcripts, globalResultDF)
-    
+    analyzer.conversation.basic_llm.assess_sentiment(llm_api_client, transcripts, globalResultDF)
+
     # experimental LLM prompt analysis
     #analyzer.conversation.basic_llm.apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "first-utterance-classifier-prompt.txt", resultColumns={"Opening Action": "Opening Action", "Request Category": "Request Category", "Ambiguity": "Ambiguity"}, filters=[filter.filter_no_user_utterance])
 

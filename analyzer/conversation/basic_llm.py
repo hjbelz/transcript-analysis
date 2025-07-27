@@ -83,7 +83,7 @@ def apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF
     for transcript in transcripts:
         if not filter.is_relevant_transcript(globalResultDF, transcript, filters):
             for key in resultColumns.keys():
-                analysis_results[key].append("No analysis")
+                analysis_results[resultColumns[key]].append("No analysis")
             continue
         # Apply the prompt to the transcript
         transcript_as_pseudo_xml = transcript_to_pseudo_xml(transcript)
@@ -115,7 +115,7 @@ def apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF
 
 
 
-# Define a Pydantic model for the JSON schema
+# Define a Pydantic model for the categorization JSON schema
 class CategorizeTranscriptsJson(BaseModel):
     topic: str
     intent: str
@@ -124,3 +124,13 @@ class CategorizeTranscriptsJson(BaseModel):
 def categorize_transcripts(llm_api_client, transcripts, globalResultDF):
     """ Categorize transcripts using LLM and add the results to the global DataFrame. """
     apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "./analyzer/conversation/llm_prompts/prmt_topic_and_intent.txt", CategorizeTranscriptsJson, resultColumns={"topic": "topic", "intent": "intent", "breakdown": "breakdown"}, filters=[filter.filter_no_user_utterance])
+
+# Define a Pydantic model for the sentiment JSON schema
+class AssessSentimentJson(BaseModel):
+    sentiment_label: str
+    reason: str
+    utterance: str
+
+def assess_sentiment(llm_api_client, transcripts, globalResultDF):
+    """ Assess sentiment of transcripts using LLM and add the results to the global DataFrame. """
+    apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "./analyzer/conversation/llm_prompts/prmt_sentiment_analysis.md", AssessSentimentJson, resultColumns={"sentiment_label": "Sentiment", "reason": "Reason", "utterance": "Characteristic utterance"}, filters=[filter.filter_no_user_utterance])
