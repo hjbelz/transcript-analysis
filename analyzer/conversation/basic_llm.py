@@ -2,6 +2,7 @@ import os
 import json
 import pandas as pd
 from pydantic import BaseModel
+import chevron
 
 from analyzer.conversation.basic import transcript_to_pseudo_xml
 import filter
@@ -10,23 +11,43 @@ import filter
 prompt_cache = {}
 
 
-def load_prompt(file_path):
-    """ Load a prompt from file or cache and return its content. """
+def load_prompt_template(file_path, data=None):
+    """ 
+    Load a prompt from file or cache and return its content. 
+    Optionally apply data to the prompt template.
+
+    Args:
+        file_path (str): Path to the prompt file.
+        data (dict, optional): Data to apply to the prompt template.
+                               If provided, the template will be rendered with this data.
+    Returns:
+        str: The prompt template content, optionally rendered with data.
+    """
     global prompt_cache
+    prompt_template = ""
+
     if file_path in prompt_cache:
-        return prompt_cache[file_path]
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"The prompt file {file_path} does not exist.")
+        # Prompt template from cache
+        prompt_template = prompt_cache[file_path]
+    else:
+        # Check if the file exists
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"The prompt file {file_path} does not exist.")
+        # Read the prompt template from file    
+        with open(file_path, 'r', encoding='utf-8') as file:
+            prompt_template = file.read()
+        # Cache the prompt template
+        prompt_cache[file_path] = prompt_template
+    
+    # Optionally apply data to the prompt template
+    if data:
+        return chevron.render(prompt_template, data)
+    else:
+        return prompt_template
 
-    prompt = ""
-    with open(file_path, 'r', encoding='utf-8') as file:
-        prompt = file.read()
-        prompt_cache[file_path] = prompt
-    return prompt
-
-def apply_prompt_to_text(llm_api_client, prompt_file_path, transcript_text):
+def apply_prompt_to_text(llm_api_client, prompt_file_path, transcript_text, data=None):
     """ Apply the prompt to the given prompt file and return the response. """
-    classifier_prompt = load_prompt(prompt_file_path)
+    classifier_prompt = load_prompt_template(prompt_file_path, data=data)
 
     # Call the LLM service API with the loaded prompt and transcript text
     response = llm_api_client.chat.completions.create(
@@ -37,9 +58,9 @@ def apply_prompt_to_text(llm_api_client, prompt_file_path, transcript_text):
     )
     return response.choices[0].message.content.strip()
 
-def apply_prompt_with_json_schema(llm_api_client, prompt_file_path, transcript_text, json_schema):
+def apply_prompt_with_json_schema(llm_api_client, prompt_file_path, transcript_text, json_schema, data=None):
     """ Apply the prompt to the given prompt file and return the response as a JSON object. """
-    classifier_prompt = load_prompt(prompt_file_path)
+    classifier_prompt = load_prompt_template(prompt_file_path, data=data)
 
     # Call the LLM service API with the loaded prompt and transcript text
     response = llm_api_client.responses.parse(
@@ -72,7 +93,7 @@ def apply_llm_prompt_for_text_result(llm_api_client, transcripts, globalResultDF
     globalResultDF["llmPromptAnalysis"] = analysis_results
 
 
-def apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, promptFilePath, jsonSchema, resultColumns={}, filters=[]):
+def apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, promptFilePath, jsonSchema, resultColumns={}, filters=[], data = None):
     """ Analyze the transcripts using a prompt and add the resulting JSON structure to the global result DataFrame. """
     # create result columns
     analysis_results = {}
@@ -89,24 +110,12 @@ def apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF
         transcript_as_pseudo_xml = transcript_to_pseudo_xml(transcript)
         print(transcript_as_pseudo_xml)  # Debugging output
 
-        llm_result_json = apply_prompt_with_json_schema(llm_api_client, promptFilePath, transcript_as_pseudo_xml, jsonSchema)
+        llm_result_json = apply_prompt_with_json_schema(llm_api_client, promptFilePath, transcript_as_pseudo_xml, jsonSchema, data=data)
         print(llm_result_json)  # Debugging output
 
-        # old : llm_result = apply_prompt_to_text(llm_api_client, promptFilePath, transcript_as_pseudo_xml)
-        # Parse the JSON result
-        # try:
-        #     llm_result_json = json.loads(llm_result)
-        # except json.JSONDecodeError as e:
-        #     print(f"Error decoding JSON from LLM result: {e}")
-        #     llm_result_json = {}
-
+        # Extract the results from the JSON response
         for result_key in resultColumns.keys():
             analysis_results[resultColumns[result_key]].append(getattr(llm_result_json, result_key, "No result"))
-
-            # if result_key in llm_result_json:
-            #     analysis_results[resultColumns[result_key]].append(llm_result_json[result_key])
-            # else:
-            #     analysis_results[resultColumns[result_key]].append("No result")
         # break  # Remove this break to analyze all transcripts
     
     # Add the results to the global DataFrame
@@ -115,18 +124,33 @@ def apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF
 
 
 
-# Define a Pydantic model for the categorization JSON schema
+
 class CategorizeTranscriptsJson(BaseModel):
+    """ Pydantic model for the JSON schema of transcript categorization. """
     topic: str
     intent: str
     breakdown: str
 
-def categorize_transcripts(llm_api_client, transcripts, globalResultDF):
+def categorize_transcripts(llm_api_client, transcripts, globalResultDF, categories_file=None):
     """ Categorize transcripts using LLM and add the results to the global DataFrame. """
-    apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "./analyzer/conversation/llm_prompts/prmt_topic_and_intent.txt", CategorizeTranscriptsJson, resultColumns={"topic": "topic", "intent": "intent", "breakdown": "breakdown"}, filters=[filter.filter_no_user_utterance])
+    # Load the category list if provided
+    categories = None
+    if categories_file:
+        if not os.path.exists(categories_file):
+            raise FileNotFoundError(f"The categories file {categories_file} does not exist.")
+        with open(categories_file, 'r', encoding='utf-8') as file:
+            categories = file.read()
 
-# Define a Pydantic model for the sentiment JSON schema
+    if categories:
+        # Closed categorization with predefined categories
+        apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "./analyzer/conversation/llm_prompts/prmt_topic_and_intent_closed.md", CategorizeTranscriptsJson, resultColumns={"topic": "topic", "intent": "intent", "breakdown": "breakdown"}, filters=[filter.filter_no_user_utterance], data={"category_list": categories})
+    else:
+        # Open categorization
+        apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "./analyzer/conversation/llm_prompts/prmt_topic_and_intent_open.md", CategorizeTranscriptsJson, resultColumns={"topic": "topic", "intent": "intent", "breakdown": "breakdown"}, filters=[filter.filter_no_user_utterance])
+
+
 class AssessSentimentJson(BaseModel):
+    """ Pydantic model for the JSON schema of sentiment analysis. """
     sentiment_label: str
     reason: str
     utterance: str
