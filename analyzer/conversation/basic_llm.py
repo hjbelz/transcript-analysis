@@ -62,15 +62,21 @@ def apply_prompt_with_json_schema(llm_api_client, prompt_file_path, transcript_t
     """ Apply the prompt to the given prompt file and return the response as a JSON object. """
     classifier_prompt = load_prompt_template(prompt_file_path, data=data)
 
-    # Call the LLM service API with the loaded prompt and transcript text
-    response = llm_api_client.responses.parse(
-        model="gpt-4.1",
-        input=classifier_prompt + transcript_text,
-        text_format=json_schema
-    )
+    # Handle format errors: On rare occasions the response may not be a valid JSON object 
+    # (LLM error or refusal to answer)
+    try:
+        # Call the LLM service API with the loaded prompt and transcript text
+        response = llm_api_client.responses.parse(
+            model="gpt-4.1-mini", # Deployment name for Azure! #todo: use the model name from the config
+            input=classifier_prompt + transcript_text,
+            text_format=json_schema
+        )
+        json_response = response.output_parsed
+ 
+    except Exception as e:
+        print(f"Error applying prompt with JSON schema: {e}")
+        json_response = None
 
-    json_response = response.output_parsed
-    # todo: check for model refused to answer 
     return json_response
     
 

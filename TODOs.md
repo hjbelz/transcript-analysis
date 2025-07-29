@@ -6,6 +6,9 @@
 
 ## TODO Later
 
+- [ ] Provide a CLI interface
+- [ ] Offer installation via PyPI
+- [ ] Write an error log - especially interesting for recoverable errors like LLM refusals.
 - [ ] Implement aspect-based sentiment analysis? (see Simmering & Huoviala 2023)
    
 
