@@ -75,9 +75,9 @@ if(__name__ == "__main__"):
     # apply LLM prompt analysis
     llm_api_client = llm_client.get_llm_client()
     # LLM : Categorization (closed categories)
-    # analyzer.conversation.basic_llm.categorize_transcripts(llm_api_client, transcripts, globalResultDF, categories_file="./category_list.md")
+    analyzer.conversation.basic_llm.categorize_transcripts(llm_api_client, transcripts, globalResultDF, categories_file="./category_list-energy dso.json")
     # LLM : Categorization (open categories)
-    analyzer.conversation.basic_llm.categorize_transcripts(llm_api_client, transcripts, globalResultDF)
+    # analyzer.conversation.basic_llm.categorize_transcripts(llm_api_client, transcripts, globalResultDF)
     # LLM : Sentiment Analysis
     analyzer.conversation.basic_llm.assess_sentiment(llm_api_client, transcripts, globalResultDF)
 

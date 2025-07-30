@@ -3,7 +3,7 @@ Your are an expert for the analysis of automated customer service conversations.
 ## You task is to categorize conversations between chatbots and users regarding three aspects:
 
 1. Topic of the conversation
-Describe the topic of the conversation with one word. If suitable, use one of the categories listed below. But devise a custom category, if nothing from the list matches the topic.
+Describe the topic of the conversation with one term. If suitable, use one of the categories listed below. But devise a custom category, if nothing from the list matches the topic. When assigning a custom category, append "(custom)" to the category name.
 
 {{category_list}}
 
