@@ -1,14 +1,16 @@
 import os
 
 llm_client = None
+llm_model = os.getenv("OPENAI_MODEL_NAME", "gpt-4.1-mini")
 
 def get_llm_client():
     """ Returns the LLM connection object. """    
     global llm_client
-    global prompt_cache
     # connection already established?
     if llm_client is not None:
         return llm_client
+    print(f"Creating new LLM client based on model {llm_model}...") # debug
+
     # Azure connection? 
     if (os.getenv("AZURE_OPENAI_API_KEY") and os.getenv("AZURE_OPENAI_ENDPOINT")):
 
@@ -28,5 +30,5 @@ def get_llm_client():
         return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     else:
         raise ValueError("No valid OpenAI API key or Azure OpenAI API key found in environment variables.")
-    
+
 

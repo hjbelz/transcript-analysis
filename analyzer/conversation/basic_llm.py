@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import chevron
 
 from analyzer.conversation.basic import transcript_to_pseudo_xml
+from llm_client import llm_model
 import filter
 
 # module variable to cache the prompt definitions
@@ -51,7 +52,7 @@ def apply_prompt_to_text(llm_api_client, prompt_file_path, transcript_text, data
 
     # Call the LLM service API with the loaded prompt and transcript text
     response = llm_api_client.chat.completions.create(
-        model="gpt-4.1-mini", # Deployment name!
+        model= llm_model,     # "gpt-4.1-mini", # Deployment name!
         messages=[
             {"role": "system", "content": classifier_prompt + transcript_text}
         ]
@@ -67,7 +68,7 @@ def apply_prompt_with_json_schema(llm_api_client, prompt_file_path, transcript_t
     try:
         # Call the LLM service API with the loaded prompt and transcript text
         response = llm_api_client.responses.parse(
-            model="gpt-4.1-mini", # Deployment name for Azure! #todo: use the model name from the config
+            model= llm_model, # "gpt-4.1-mini", # Deployment name for Azure! #todo: use the model name from the config
             input=classifier_prompt + transcript_text,
             text_format=json_schema
         )
@@ -114,10 +115,10 @@ def apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF
             continue
         # Apply the prompt to the transcript
         transcript_as_pseudo_xml = transcript_to_pseudo_xml(transcript)
-        print(transcript_as_pseudo_xml)  # Debugging output
+        # print(transcript_as_pseudo_xml)  # Debugging output
 
         llm_result_json = apply_prompt_with_json_schema(llm_api_client, promptFilePath, transcript_as_pseudo_xml, jsonSchema, data=data)
-        print(llm_result_json)  # Debugging output
+        # print(llm_result_json)  # Debugging output
 
         # Extract the results from the JSON response
         for result_key in resultColumns.keys():

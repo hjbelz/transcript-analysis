@@ -141,6 +141,22 @@ if(__name__ == "__main__"):
         # Basic global analysis
         analyzer.conversation.basic.countTurnsInTranscripts(transcripts, resultDF, True)
         analyzer.conversation.basic.maxWordCountUserUtterances(transcripts, resultDF)
+        # analyzer.conversation.basic.addLocalPath(transcripts, globalResultDF)
+
+        # apply LLM prompt analysis
+        llm_api_client = llm_client.get_llm_client()
+        # LLM : Categorization (closed categories)
+        analyzer.conversation.basic_llm.categorize_transcripts(llm_api_client, transcripts, resultDF, categories_file="./category_list-energy dso.json")
+        # LLM : Categorization (open categories)
+        # analyzer.conversation.basic_llm.categorize_transcripts(llm_api_client, transcripts, globalResultDF)
+        # LLM : Sentiment Analysis
+        analyzer.conversation.basic_llm.assess_sentiment(llm_api_client, transcripts, resultDF)
+
+        # experimental LLM prompt analysis
+        #analyzer.conversation.basic_llm.apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "first-utterance-classifier-prompt.txt", resultColumns={"Opening Action": "Opening Action", "Request Category": "Request Category", "Ambiguity": "Ambiguity"}, filters=[filter.filter_no_user_utterance])
+
+        # finally, add the transcript content to the global result DataFrame
+        analyzer.conversation.basic.addTranscriptsToResult(transcripts, resultDF)
 
         # Append the batch results to the database
         with database_engine.connect() as connection:
@@ -165,45 +181,4 @@ if(__name__ == "__main__"):
     # Close the database connection
     database_engine.dispose()
 
-    # end execution
-    import sys
-    sys.exit(0)
-
-
-
-    # initialize global result DataFrame
-    resultDF = initResultDataFrameFromTranscripts(transcripts)
-
-    # read transcript files from the given path
-    # transcripts = readTranscriptFilesInPath("./transcripts")
-
-    # initialize global result DataFrame
-    # globalResultDF = initGlobalResultDataFrameFromTranscripts(transcripts)
-    
-    # perform global analysis
-    analyzer.conversation.basic.countTurnsInTranscripts(transcripts, resultDF, True)
-    analyzer.conversation.basic.maxWordCountUserUtterances(transcripts, resultDF)
-    # analyzer.conversation.basic.addLocalPath(transcripts, globalResultDF)
-
-    # apply LLM prompt analysis
-    llm_api_client = llm_client.get_llm_client()
-    # LLM : Categorization (closed categories)
-    analyzer.conversation.basic_llm.categorize_transcripts(llm_api_client, transcripts, resultDF, categories_file="./category_list-energy dso.json")
-    # LLM : Categorization (open categories)
-    # analyzer.conversation.basic_llm.categorize_transcripts(llm_api_client, transcripts, globalResultDF)
-    # LLM : Sentiment Analysis
-    analyzer.conversation.basic_llm.assess_sentiment(llm_api_client, transcripts, resultDF)
-
-    # experimental LLM prompt analysis
-    #analyzer.conversation.basic_llm.apply_llm_prompt_for_JSON_result(llm_api_client, transcripts, globalResultDF, "first-utterance-classifier-prompt.txt", resultColumns={"Opening Action": "Opening Action", "Request Category": "Request Category", "Ambiguity": "Ambiguity"}, filters=[filter.filter_no_user_utterance])
-
-
-    # finally, add the transcript content to the global result DataFrame
-    analyzer.conversation.basic.addTranscriptsToResult(transcripts, resultDF)
-
-    # Save the global result DataFrame to a file
-    # globalResultDF.to_csv("./results/globalResult.csv", index=False)
-    resultDF.to_excel("./results/globalResult.xlsx", index=False)
-
-    print(resultDF)
  
