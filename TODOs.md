@@ -2,17 +2,14 @@
 
 - [ ] Ability to determine the response language (instead of generic "language of the conversation") 
 - [ ] integrate LLM by Simon Willison to enable the use of local models 
-
+- [ ] Provide a CLI interface using [click](https://click.palletsprojects.com/)
 
 ## TODO Later
 
-- [ ] Provide a CLI interface
 - [ ] Offer installation via PyPI
 - [ ] Write an error log - especially interesting for recoverable errors like LLM refusals.
 - [ ] Implement aspect-based sentiment analysis? (see Simmering & Huoviala 2023)
    
-
-
 
 ## Done
 
