@@ -1,5 +1,7 @@
 # TODOs
 
+Name for the project: ConvoSpector
+
 - [ ] Ability to determine the response language (instead of generic "language of the conversation") 
 - [ ] integrate LLM by Simon Willison to enable the use of local models 
 - [ ] Provide a CLI interface using [click](https://click.palletsprojects.com/)
